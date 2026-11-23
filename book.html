@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{{ b.title }} &middot; {% endblock %}
+{% block content %}
+<div class="detail">
+  <div>
+    {% if b.photo %}<img class="cover big" src="{{ url_for('static', filename='uploads/' ~ b.photo) }}" alt="Photo of {{ b.title }}">
+    {% else %}<div class="cover big c{{ b.id % 4 }}"><span>{{ b.title }}</span></div>{% endif %}
+  </div>
+  <div>
+    <h1>{{ b.title }}</h1>
+    <p class="muted">by {{ b.author }}</p>
+    <p><span class="price">{% if b.offer == 'sell' %}RM {{ '%.2f'|format(b.price) }}{% else %}Exchange{% endif %}</span>
+      {% if b.status == 'sold' %}<span class="tag sold">Sold</span>
+      {% else %}<span class="tag {{ 'ex' if b.offer == 'exchange' }}">{{ 'For sale' if b.offer == 'sell' else 'For exchange' }}</span>{% endif %}</p>
+    <dl><dt>Subject</dt><dd>{{ b.subject }}</dd><dt>Condition</dt><dd>{{ b.cond }}</dd>
+        <dt>Seller</dt><dd>{{ b.seller }}</dd><dt>Listed</dt><dd>{{ b.created }}</dd></dl>
+    {% if b.note %}<p>{{ b.note }}</p>{% endif %}
+    {% if user and (user.id == b.user_id or user.is_admin) %}
+    <div class="actions">
+      <a class="btn small" href="{{ url_for('edit', book_id=b.id) }}">Edit</a>
+      <form method="post" action="{{ url_for('toggle_sold', book_id=b.id) }}" class="inline"><input type="hidden" name="csrf" value="{{ csrf_token }}">
+        <button class="btn small ghost">{{ 'Mark as available' if b.status == 'sold' else 'Mark as sold' }}</button></form>
+      <form method="post" action="{{ url_for('delete', book_id=b.id) }}" class="inline"><input type="hidden" name="csrf" value="{{ csrf_token }}">
+        <button class="btn small danger" data-confirm="Delete this listing?">Delete</button></form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<section id="messages" class="card">
+  <h2>Messages</h2>
+  {% if not user %}<p><a href="{{ url_for('login') }}">Log in</a> to message the seller.</p>
+  {% else %}
+    {% for m in msgs %}
+      <div class="msg {{ 'mine' if m.sender_id == user.id }}"><strong>{{ 'You' if m.sender_id == user.id else m.sender }}</strong>
+        <span class="muted">{{ m.created }}{% if user.id == b.user_id and m.sender_id != user.id %} &middot; {{ m.sender_email }}{% endif %}</span>
+        <p>{{ m.body }}</p></div>
+    {% else %}<p class="muted">No messages yet.</p>{% endfor %}
+    {% if user.id != b.user_id and b.status != 'sold' %}
+      <form method="post" action="{{ url_for('message', book_id=b.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token }}">
+        <label>Message to {{ b.seller }} <textarea name="body" rows="3" maxlength="500" required placeholder="Is this still available? Where can we meet?"></textarea></label>
+        <button class="btn" type="submit">Send message</button></form>
+    {% elif user.id == b.user_id and partners %}
+      <form method="post" action="{{ url_for('message', book_id=b.id) }}">
+        <input type="hidden" name="csrf" value="{{ csrf_token }}">
+        <label>Reply to <select name="to">{% for pid, pname in partners %}<option value="{{ pid }}">{{ pname }}</option>{% endfor %}</select></label>
+        <label>Message <textarea name="body" rows="3" maxlength="500" required></textarea></label>
+        <button class="btn" type="submit">Send reply</button></form>
+    {% endif %}
+  {% endif %}
+</section>
+
+{% if user and user.id != b.user_id %}
+<details class="card"><summary>Report this listing</summary>
+  <form method="post" action="{{ url_for('report', book_id=b.id) }}">
+    <input type="hidden" name="csrf" value="{{ csrf_token }}">
+    <label>What is wrong with it? <textarea name="reason" rows="2" maxlength="300" required></textarea></label>
+    <button class="btn small danger" type="submit">Send report</button></form>
+</details>
+{% endif %}
+{% endblock %}

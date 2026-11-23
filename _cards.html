@@ -1,0 +1,17 @@
+{% for b in books %}
+<article class="book">
+  <a href="{{ url_for('book', book_id=b.id) }}" aria-label="{{ b.title }}">
+    {% if b.photo %}<img class="cover" src="{{ url_for('static', filename='uploads/' ~ b.photo) }}" alt="Photo of {{ b.title }}" loading="lazy">
+    {% else %}<div class="cover c{{ b.id % 4 }}"><span>{{ b.title }}</span></div>{% endif %}
+  </a>
+  <div class="info">
+    <h3><a href="{{ url_for('book', book_id=b.id) }}">{{ b.title }}</a></h3>
+    <p class="muted">{{ b.author }} &middot; {{ b.subject }}</p>
+    <p class="muted">{{ b.cond }} &middot; by {{ b.seller }}</p>
+    <p><span class="price">{% if b.offer == 'sell' %}RM {{ '%.2f'|format(b.price) }}{% else %}Exchange{% endif %}</span>
+       <span class="tag {{ 'ex' if b.offer == 'exchange' }}">{{ 'For sale' if b.offer == 'sell' else 'For exchange' }}</span></p>
+  </div>
+</article>
+{% else %}
+<p class="empty">No books match your search yet. <a href="{{ url_for('sell') }}">List the first one.</a></p>
+{% endfor %}

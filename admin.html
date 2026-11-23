@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Admin &middot; {% endblock %}
+{% block content %}
+<h1>Reported listings</h1>
+{% for r in reports %}
+<div class="card"><p><a href="{{ url_for('book', book_id=r.book_id) }}"><strong>{{ r.title }}</strong></a>
+  <span class="muted">reported by {{ r.reporter }} on {{ r.created }}</span></p>
+  <p>{{ r.reason }}</p>
+  <form method="post" action="{{ url_for('dismiss', report_id=r.id) }}" class="inline"><input type="hidden" name="csrf" value="{{ csrf_token }}"><button class="btn small ghost">Dismiss report</button></form>
+  <form method="post" action="{{ url_for('delete', book_id=r.book_id) }}" class="inline"><input type="hidden" name="csrf" value="{{ csrf_token }}"><input type="hidden" name="from" value="admin">
+    <button class="btn small danger" data-confirm="Delete this listing?">Delete listing</button></form></div>
+{% else %}<p class="empty">No reports. Everything looks fine.</p>{% endfor %}
+{% endblock %}
